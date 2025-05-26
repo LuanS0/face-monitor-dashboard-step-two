@@ -110,9 +110,13 @@ export default function FaceMonitorDashboard() {
               </Label>
               <Textarea
                 id="distance-calculation"
-                placeholder="Descreva o método utilizado para calcular a distância do rosto até a câmera..."
                 className="min-h-[100px] resize-none"
-                defaultValue=""
+                defaultValue="A distância foi estimada usando a proporção entre a largura do retângulo delimitador (bounding box) detectado pelo face-api.js e uma distância de referência. O cálculo assume que:
+                                    
+                                    1. Para uma distância de referência de 100cm, um rosto médio ocupa aproximadamente 100px de largura
+                                    2. A fórmula aplicada é: distância = (largura_real_rosto * distância_referência) / largura_rosto_em_pixels
+                                    3. Esta abordagem fornece uma estimativa razoável para distâncias entre 50cm e 200cm
+                                    4. A precisão varia com a resolução da câmera e características físicas do rosto"
               />
             </div>
 
@@ -124,7 +128,20 @@ export default function FaceMonitorDashboard() {
                 id="firebase-rule"
                 placeholder="Explique a regra implementada para registrar detecções no Firebase..."
                 className="min-h-[100px] resize-none"
-                defaultValue=""
+                defaultValue="As detecções são registradas no Firestore com as seguintes regras:
+
+                                    1. Coleção: 'faceDetections'
+                                    2. Estrutura do documento:
+                                    - descriptor: Array<number> (vetor de características faciais)
+                                    - timestamp: number (milissegundos desde epoch)
+                                    - age: number (idade estimada)
+                                    - gender: string (gênero estimado)
+                                    - expression: string (emoção predominante)
+                                    
+                                    3. Regras de segurança:
+                                    - Somente leitura/escrita por usuários autenticados
+                                    - Validação dos campos obrigatórios
+                                    - Timestamp deve ser válido (entre data atual - 1 dia e data atual + 5 minutos)"
               />
             </div>
 
@@ -136,7 +153,11 @@ export default function FaceMonitorDashboard() {
                 id="duplicate-prevention"
                 placeholder="Descreva o método utilizado para evitar contagem duplicada de rostos..."
                 className="min-h-[100px] resize-none"
-                defaultValue=""
+                defaultValue="O sistema utiliza o face-api.js para detectar múltiplas faces com detectAllFaces, e extrair descritores faciais vetoriais com withFaceDescriptors. Para evitar contagem duplicada de rostos, ele compara o descritor facial atual com descritores salvos usando a distância euclidiana — uma medida matemática que calcula a raiz da soma dos quadrados das diferenças entre os elementos dos vetores.
+                                        Se a distância entre dois descritores for menor que 0.6, os rostos são considerados iguais. Essa verificação é feita em dois níveis:
+                                        Localmente: evita salvar rostos detectados nos últimos 10 segundos se forem semelhantes a um recentemente salvo.
+                                        Globalmente (Firestore): consulta o banco de dados para garantir que a face ainda não foi armazenada anteriormente.
+                                        Isso garante que cada face seja registrada apenas uma vez, mesmo que apareça repetidamente no vídeo."
               />
             </div>
           </CardContent>
